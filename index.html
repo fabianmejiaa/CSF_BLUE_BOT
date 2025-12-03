@@ -4,49 +4,56 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Asistente Virtual</title>
+
 <style>
+    /* -------------------------------
+       ESTILO GENERAL – AZUL MODERNO
+    ---------------------------------*/
     body {
         margin: 0;
-        font-family: Arial, sans-serif;
-        background: #0d0d0f;
-        color: #fff;
+        font-family: "Inter", Arial, sans-serif;
+        background: linear-gradient(135deg, #d9eaff, #8bbcff);
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100vh;
     }
 
+    /* CONTENEDOR */
     #chatContainer {
         width: 420px;
         height: 85vh;
-        background: rgba(255, 255, 255, 0.08);
-        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 20px;
         padding: 20px;
         display: flex;
         flex-direction: column;
-        backdrop-filter: blur(14px);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255,255,255,0.5);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         position: relative;
     }
 
+    /* BOTÓN REFRESH */
     #refreshChat {
         position: absolute;
         top: 10px;
         right: 10px;
-        background: rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.4);
         border: none;
-        color: white;
-        padding: 6px 10px;
+        color: #03426f;
+        padding: 8px 12px;
         cursor: pointer;
-        border-radius: 10px;
-        backdrop-filter: blur(8px);
-        transition: 0.2s;
+        border-radius: 12px;
         font-size: 18px;
+        transition: 0.2s;
     }
 
     #refreshChat:hover {
-        background: rgba(255,255,255,0.25);
+        background: rgba(255,255,255,0.8);
     }
 
+    /* ÁREA DEL CHAT */
     #chat {
         flex: 1;
         overflow-y: auto;
@@ -54,128 +61,144 @@
         margin-bottom: 10px;
     }
 
+    /* -------------------------------
+        BURBUJAS DE MENSAJE
+    ---------------------------------*/
     .msg {
-        margin-bottom: 12px;
-        padding: 10px 14px;
-        border-radius: 12px;
+        margin-bottom: 14px;
+        padding: 12px 16px;
+        border-radius: 14px;
         max-width: 80%;
-        line-height: 1.4;
+        line-height: 1.5;
         word-wrap: break-word;
+        font-size: 15px;
+        backdrop-filter: blur(5px);
     }
 
+    /* MENSAJE DEL USUARIO */
     .user {
-        background: rgba(0, 140, 255, 0.3);
+        background: #0d6efd;
+        color: white;
         margin-left: auto;
-        text-align: right;
     }
 
+    /* MENSAJE DEL BOT */
     .bot {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(255,255,255,0.6);
+        color: #02375d;
+        border: 1px solid rgba(255,255,255,0.7);
     }
 
+    /* -------------------------------
+        INPUTS Y BOTONES
+    ---------------------------------*/
     #inputBox {
         display: flex;
         margin-top: auto;
+        gap: 8px;
     }
 
     #messageInput {
         flex: 1;
-        padding: 10px;
-        border-radius: 12px;
+        padding: 12px;
+        border-radius: 14px;
         border: none;
         outline: none;
-        background: rgba(255,255,255,0.1);
-        color: white;
         font-size: 14px;
+        background: rgba(255,255,255,0.5);
+        color: #02375d;
+        backdrop-filter: blur(6px);
     }
 
-    #sendBtn {
-        margin-left: 8px;
-        padding: 10px 14px;
-        background: #007bff;
+    #sendBtn,
+    #speakBtn {
+        padding: 12px 16px;
+        background: #0d6efd;
         color: white;
         border: none;
-        border-radius: 10px;
+        border-radius: 14px;
         cursor: pointer;
-        transition: 0.2s;
         font-size: 14px;
+        transition: 0.2s;
     }
 
-    #sendBtn:hover {
-        background: #0a8bff;
+    #sendBtn:hover,
+    #speakBtn:hover {
+        background: #0b5ed7;
     }
 
+    /* Loader */
     #loader {
         display: none;
         text-align: center;
         padding: 10px;
-        color: #aaa;
+        color: #02375d;
         font-style: italic;
     }
 
-    .loading-dots {
-        display: inline-block;
-    }
-    .loading-dots span {
-        animation: blink 1.4s infinite both;
-        animation-delay: 0.2s;
-    }
-    .loading-dots span:nth-child(2) {
-        animation-delay: 0.4s;
-    }
-    .loading-dots span:nth-child(3) {
-        animation-delay: 0.6s;
-    }
-    @keyframes blink {
-        0%, 80%, 100% { opacity: 0; }
-        40% { opacity: 1; }
-    }
 </style>
 </head>
+
 <body>
 
 <div id="chatContainer">
     <button id="refreshChat">↻</button>
     <div id="chat"></div>
-    
-    <!-- Elemento loader que estaba faltando -->
-    <div id="loader">
-        <span class="loading-dots">
-            <span>.</span><span>.</span><span>.</span>
-        </span>
-    </div>
-    
+
+    <div id="loader">Procesando...</div>
+
     <div id="inputBox">
         <input id="messageInput" type="text" placeholder="Escribe tu mensaje..." />
         <button id="sendBtn">Enviar</button>
+        <button id="speakBtn">🔊</button>
     </div>
 </div>
 
 <script>
+/* ---------------------------------------------------
+    SISTEMA DE VOZ – GRATIS (Navegador)
+-----------------------------------------------------*/
+function hablarGratis(texto) {
+    const voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "es-ES";
+
+    const voces = speechSynthesis.getVoices();
+    const vozEspañol = voces.find(v => v.lang.includes("es"));
+    if (vozEspañol) voz.voice = vozEspañol;
+
+    speechSynthesis.speak(voz);
+}
+
+/* ---------------------------------------------------
+    CONFIGURACIÓN DEL BOT
+-----------------------------------------------------*/
 const N8N_WEBHOOK_URL = "https://n8n.srv1161635.hstgr.cloud/webhook/6b4f38ff-0de0-49f0-843f-a277a55bdfd5";
+
 let sessionId = localStorage.getItem("sessionId") || crypto.randomUUID();
 localStorage.setItem("sessionId", sessionId);
 
 // Mensaje inicial automático
 window.onload = () => {
     agregarMensajeBot(`
-        <b>¡Hola! 👋 Soy tu Asistente Virtual TEC.</b><br>
-        Estoy aquí para ayudarte a resolver cualquier problema técnico o académico.<br><br>
-        Cuéntame, ¿en qué puedo ayudarte hoy?
+        <b>¡Hola! 👋 Soy tu Asistente Virtual.</b><br>
+        ¿Qué te gustaría saber hoy?
     `);
 };
 
-// CORRECCIÓN 1: Event listeners corregidos
+/* ---------------------------------------------------
+    EVENTOS
+-----------------------------------------------------*/
 document.getElementById("sendBtn").addEventListener("click", sendMessage);
-document.getElementById("messageInput").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
-        sendMessage();
-    }
+document.getElementById("messageInput").addEventListener("keypress", e => {
+    if (e.key === "Enter") sendMessage();
+});
+document.getElementById("speakBtn").addEventListener("click", () => {
+    hablarGratis("Hola, soy tu asistente virtual. ¿Cómo puedo ayudarte?");
 });
 
-// ---------------------------------------------------------
-// ENVIO DEL MENSAJE
-// ---------------------------------------------------------
+/* ---------------------------------------------------
+    ENVIAR MENSAJE
+-----------------------------------------------------*/
 async function sendMessage() {
     const input = document.getElementById("messageInput");
     const message = input.value.trim();
@@ -183,59 +206,31 @@ async function sendMessage() {
 
     agregarMensajeUsuario(message);
     input.value = "";
-
     mostrarProcesando(true);
 
     try {
         const response = await fetch(N8N_WEBHOOK_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify({
-                message: message,
-                sessionId: sessionId
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message, sessionId })
         });
 
-        console.log("Respuesta status:", response.status);
-
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-
         const data = await response.json();
-        console.log("Respuesta JSON:", data);
+        const respuesta = data.output || data.message || "No entendí eso.";
 
-        // Manejar diferentes estructuras de respuesta
-        let respuesta = "";
-        if (data && data.output) {
-            respuesta = data.output;
-        } else if (data && data.message) {
-            respuesta = data.message;
-        } else if (data && typeof data === 'string') {
-            respuesta = data;
-        } else {
-            respuesta = "Recibí una respuesta sin formato reconocido";
-        }
-
-        agregarMensajeBot(formatearHTMLSeguro(respuesta));
+        agregarMensajeBot(respuesta);
+        hablarGratis(respuesta);
 
     } catch (error) {
-        console.error("Error completo:", error);
-        agregarMensajeBot(`
-            Error al conectar con el servidor 😕<br>
-            <small>Detalles: ${error.message}</small>
-        `);
+        agregarMensajeBot("Error al conectar con el servidor.");
     }
 
     mostrarProcesando(false);
 }
 
-// ---------------------------------------------------------
-// MUESTRA EL MENSAJE DEL USUARIO
-// ---------------------------------------------------------
+/* ---------------------------------------------------
+    MOSTRAR MENSAJES
+-----------------------------------------------------*/
 function agregarMensajeUsuario(msg) {
     const chat = document.getElementById("chat");
     const burbuja = document.createElement("div");
@@ -245,9 +240,6 @@ function agregarMensajeUsuario(msg) {
     chat.scrollTop = chat.scrollHeight;
 }
 
-// ---------------------------------------------------------
-// MUESTRA EL MENSAJE DEL BOT (HTML PERMITIDO)
-// ---------------------------------------------------------
 function agregarMensajeBot(msgHTML) {
     const chat = document.getElementById("chat");
     const burbuja = document.createElement("div");
@@ -257,43 +249,24 @@ function agregarMensajeBot(msgHTML) {
     chat.scrollTop = chat.scrollHeight;
 }
 
-// ---------------------------------------------------------
-// ANIMACIÓN "Procesando..."
-// ---------------------------------------------------------
+/* ---------------------------------------------------
+    LOADER
+-----------------------------------------------------*/
 function mostrarProcesando(show) {
-    const loader = document.getElementById("loader");
-    if (loader) {
-        loader.style.display = show ? "block" : "none";
-    }
+    document.getElementById("loader").style.display = show ? "block" : "none";
 }
 
-// ---------------------------------------------------------
-// FORMATEO SEGURO
-// ---------------------------------------------------------
-function formatearHTMLSeguro(texto) {
-    if (!texto) return "";
-    texto = texto.replace(
-        /\[([^\]]+)\]\((https?:\/\/[^\s()<>]+)\)/g,
-        (m, label, url) => `<a href="${url}" target="_blank" style="color:red;">${label}</a>`
-    );
-    texto = texto.replace(
-        /(?<!href=")(?<!href=')(https?:\/\/[^\s"'<>]+)/g,
-        (m, url) => `<a href="${url}" target="_blank" style="color:red;">${url}</a>`
-    );
-    return texto;
-}
-// ---------------------------------------------------------
-// REFRESCAR CHAT
-// ---------------------------------------------------------
-function refrescarChat() {
-    const chat = document.getElementById("chat");
-    chat.innerHTML = "";
+/* ---------------------------------------------------
+    REINICIAR CHAT
+-----------------------------------------------------*/
+document.getElementById("refreshChat").addEventListener("click", () => {
+    document.getElementById("chat").innerHTML = "";
     sessionId = crypto.randomUUID();
     localStorage.setItem("sessionId", sessionId);
-    agregarMensajeBot("<b>¡Chat reiniciado!</b> 🔄<br>¿En qué puedo ayudarte ahora?");
-}
-
-document.getElementById("refreshChat").addEventListener("click", refrescarChat);
+    agregarMensajeBot("Chat reiniciado 🔄");
+});
 </script>
+
 </body>
 </html>
+
