@@ -16,15 +16,103 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        min-height: 100vh;
         padding: 20px;
     }
 
-    /* CONTENEDOR */
-    #chatContainer {
-        width: 450px;
+    /* CONTENEDOR PRINCIPAL */
+    .app-container {
+        width: 480px;
         max-width: 100%;
-        height: 90vh;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    /* CABECERA CON ESTADO SEPARADO */
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 5px;
+        margin-bottom: 5px;
+    }
+
+    /* Indicador de conexión - SEPARADO DEL CHAT */
+    #connectionStatus {
+        background: rgba(255, 255, 255, 0.25);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.3);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    #connectionStatus.online {
+        background: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+        border-color: rgba(40, 167, 69, 0.3);
+    }
+
+    #connectionStatus.online .status-icon {
+        color: #28a745;
+    }
+
+    #connectionStatus.offline {
+        background: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+        border-color: rgba(220, 53, 69, 0.3);
+    }
+
+    #connectionStatus.offline .status-icon {
+        color: #dc3545;
+    }
+
+    .status-icon {
+        font-size: 16px;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+
+    /* Botón refresh en cabecera */
+    .header-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .header-btn {
+        background: rgba(255,255,255,0.4);
+        border: none;
+        color: #03426f;
+        padding: 8px 15px;
+        cursor: pointer;
+        border-radius: 12px;
+        font-size: 14px;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    .header-btn:hover {
+        background: rgba(255,255,255,0.8);
+        transform: translateY(-1px);
+    }
+
+    /* CONTENEDOR DEL CHAT - SIN ESTADO DENTRO */
+    #chatContainer {
+        height: 78vh;
         background: rgba(255, 255, 255, 0.25);
         border-radius: 20px;
         padding: 20px;
@@ -34,26 +122,7 @@
         border: 1px solid rgba(255,255,255,0.5);
         box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         position: relative;
-    }
-
-    /* BOTÓN REFRESH */
-    #refreshChat {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(255,255,255,0.4);
-        border: none;
-        color: #03426f;
-        padding: 8px 12px;
-        cursor: pointer;
-        border-radius: 12px;
-        font-size: 18px;
-        transition: 0.2s;
-        z-index: 10;
-    }
-
-    #refreshChat:hover {
-        background: rgba(255,255,255,0.8);
+        overflow: hidden;
     }
 
     /* ÁREA DEL CHAT */
@@ -89,6 +158,7 @@
         background: #0d6efd;
         color: white;
         margin-left: auto;
+        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.2);
     }
 
     /* MENSAJE DEL BOT */
@@ -96,6 +166,7 @@
         background: rgba(255,255,255,0.6);
         color: #02375d;
         border: 1px solid rgba(255,255,255,0.7);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         position: relative;
     }
 
@@ -130,19 +201,19 @@
         50% { transform: scaleY(1.5); }
     }
 
-    /* BOTÓN DE GRABACIÓN - VISIBLE */
+    /* BOTÓN DE MICRÓFONO */
     #micBtn {
         background: #28a745 !important;
-        color: white;
+        color: white !important;
         position: relative;
     }
 
     #micBtn.recording {
         background: #dc3545 !important;
-        animation: pulse 1.5s infinite;
+        animation: pulseRed 1.5s infinite;
     }
 
-    @keyframes pulse {
+    @keyframes pulseRed {
         0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
         70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
         100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
@@ -156,83 +227,123 @@
         margin-top: auto;
         gap: 8px;
         align-items: center;
+        background: rgba(255,255,255,0.3);
+        padding: 12px;
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.4);
     }
 
     #messageInput {
         flex: 1;
         padding: 12px 15px;
-        border-radius: 14px;
+        border-radius: 12px;
         border: none;
         outline: none;
         font-size: 14px;
-        background: rgba(255,255,255,0.5);
+        background: rgba(255,255,255,0.7);
         color: #02375d;
-        backdrop-filter: blur(6px);
         transition: all 0.3s;
+        min-height: 44px;
     }
 
     #messageInput:focus {
-        background: rgba(255,255,255,0.8);
+        background: rgba(255,255,255,0.9);
         box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.3);
     }
 
     #messageInput:disabled {
-        background: rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.4);
         cursor: not-allowed;
     }
 
-    #sendBtn,
-    #micBtn,
-    #stopBtn {
+    /* BOTÓN ENVIAR - CON ICONO COMO ANTES */
+    #sendBtn {
         padding: 12px 16px;
+        background: #0d6efd;
+        color: white;
         border: none;
-        border-radius: 14px;
+        border-radius: 12px;
         cursor: pointer;
-        font-size: 14px;
-        transition: 0.2s;
-        min-width: 60px;
+        font-size: 16px;
+        transition: all 0.2s;
         height: 44px;
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-
-    #sendBtn {
-        background: #0d6efd;
-        color: white;
+        min-width: 44px;
+        box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
     }
 
     #sendBtn:hover:not(:disabled) {
         background: #0b5ed7;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 12px rgba(13, 110, 253, 0.3);
+    }
+
+    #sendBtn:active:not(:disabled) {
+        transform: translateY(0);
     }
 
     #sendBtn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+        transform: none !important;
     }
 
+    /* BOTÓN MICRÓFONO */
     #micBtn {
-        background: #28a745;
-        color: white;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 100px;
+        gap: 6px;
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
     }
 
     #micBtn:hover:not(:disabled) {
-        background: #218838;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
     }
 
     #micBtn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+        transform: none !important;
     }
 
+    /* BOTÓN DETENER */
     #stopBtn {
         background: #dc3545;
         color: white;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        height: 44px;
         display: none;
+        align-items: center;
+        justify-content: center;
+        min-width: 100px;
+        gap: 6px;
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
     }
 
     #stopBtn:hover:not(:disabled) {
         background: #c82333;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 12px rgba(220, 53, 69, 0.3);
     }
 
     /* Loader */
@@ -242,18 +353,35 @@
         padding: 10px;
         color: #02375d;
         font-style: italic;
+        background: rgba(255,255,255,0.3);
+        border-radius: 10px;
+        margin: 10px 0;
     }
 
-    /* Indicador de conexión */
-    #connectionStatus {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        font-size: 12px;
-        padding: 4px 8px;
-        border-radius: 10px;
-        background: rgba(0,0,0,0.1);
-        color: #02375d;
+    /* Notificación de permiso */
+    #permissionNotification {
+        display: none;
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.85);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 12px;
+        z-index: 1000;
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+        from { transform: translate(-50%, -20px); opacity: 0; }
+        to { transform: translate(-50%, 0); opacity: 1; }
     }
 
     /* Scrollbar personalizada */
@@ -274,44 +402,55 @@
     #chat::-webkit-scrollbar-thumb:hover {
         background: rgba(0,0,0,0.3);
     }
-
-    /* Notificación de permiso */
-    #permissionNotification {
-        display: none;
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 10px;
-        z-index: 1000;
-        text-align: center;
-        max-width: 80%;
-    }
 </style>
 </head>
 
 <body>
 
 <div id="permissionNotification">
-    ⚠️ Por favor, permite el acceso al micrófono cuando el navegador te lo pida
+    <div style="font-size: 18px; margin-bottom: 5px;">🎤 Permiso de micrófono</div>
+    <div>Por favor, haz clic en <strong>"Permitir"</strong> cuando tu navegador lo solicite</div>
+    <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">(Es necesario para que pueda escucharte)</div>
 </div>
 
-<div id="chatContainer">
-    <div id="connectionStatus">🟢 Conectado</div>
-    <button id="refreshChat" title="Reiniciar chat">↻</button>
-    
-    <div id="chat"></div>
+<div class="app-container">
+    <!-- CABECERA SEPARADA DEL CHAT -->
+    <div class="header-section">
+        <!-- ESTADO DE CONEXIÓN - AHORA SEPARADO -->
+        <div id="connectionStatus" class="online">
+            <span class="status-icon">●</span>
+            <span class="status-text">Conectado</span>
+        </div>
+        
+        <!-- BOTONES DE LA CABECERA -->
+        <div class="header-buttons">
+            <button class="header-btn" id="refreshChat" title="Reiniciar chat">
+                🔄 Reiniciar
+            </button>
+        </div>
+    </div>
 
-    <div id="loader">Procesando...</div>
+    <!-- CONTENEDOR DEL CHAT (SIN ESTADO DENTRO) -->
+    <div id="chatContainer">
+        <!-- ÁREA DEL CHAT -->
+        <div id="chat"></div>
 
-    <div id="inputBox">
-        <input id="messageInput" type="text" placeholder="Escribe tu mensaje aquí..." />
-        <button id="sendBtn" title="Enviar mensaje">📤</button>
-        <button id="micBtn" title="Hablar con micrófono">🎤 Hablar</button>
-        <button id="stopBtn" title="Detener grabación">⏹️ Detener</button>
+        <!-- LOADER -->
+        <div id="loader">Procesando tu mensaje...</div>
+
+        <!-- ÁREA DE INPUT -->
+        <div id="inputBox">
+            <input id="messageInput" type="text" placeholder="Escribe tu mensaje aquí..." />
+            <button id="sendBtn" title="Enviar mensaje">📤</button>
+            <button id="micBtn" title="Hablar con micrófono">
+                <span class="mic-icon">🎤</span>
+                <span class="mic-text">Hablar</span>
+            </button>
+            <button id="stopBtn" title="Detener grabación">
+                <span class="stop-icon">⏹️</span>
+                <span class="stop-text">Detener</span>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -328,7 +467,6 @@ let reconocimiento = null;
 let escuchando = false;
 let botHablando = false;
 let mensajeEnProceso = false;
-let audioWavesInterval = null;
 
 // Elementos del DOM
 const chatElement = document.getElementById("chat");
@@ -341,7 +479,33 @@ const connectionStatus = document.getElementById("connectionStatus");
 const permissionNotification = document.getElementById("permissionNotification");
 
 /* ---------------------------------------------------
-    SISTEMA DE VOZ – TEXTO A VOZ (CORREGIDO)
+    INICIALIZACIÓN
+-----------------------------------------------------*/
+document.addEventListener('DOMContentLoaded', () => {
+    // Mensaje inicial
+    setTimeout(() => {
+        agregarMensajeBot(`
+            <div style="text-align: left;">
+                <div style="font-size: 16px; margin-bottom: 8px;"><b>¡Hola! 👋 Soy tu Asistente Virtual</b></div>
+                <div style="font-size: 13px; color: #555; margin-bottom: 5px;">
+                    <b>Para escribir:</b> Escribe abajo y haz clic en 📤
+                </div>
+                <div style="font-size: 13px; color: #555;">
+                    <b>Para hablar:</b> Haz clic en 🎤 Hablar (permite el micrófono)
+                </div>
+            </div>
+        `);
+    }, 300);
+    
+    // Verificar conexión
+    actualizarEstadoConexion();
+    
+    // Enfocar input
+    setTimeout(() => messageInput.focus(), 500);
+});
+
+/* ---------------------------------------------------
+    SISTEMA DE VOZ – TEXTO A VOZ
 -----------------------------------------------------*/
 function hablarGratis(texto) {
     if (!texto || botHablando) return;
@@ -349,19 +513,18 @@ function hablarGratis(texto) {
     botHablando = true;
     bloquearEntradaUsuario(true);
     
-    // Agregar ondas de audio VISIBLES
+    // Agregar ondas de audio
     agregarOndasAudio();
     
     // Detener cualquier voz anterior
     speechSynthesis.cancel();
     
-    // Dividir texto largo en partes más pequeñas
+    // Dividir texto en partes manejables
     const partes = dividirTextoEnPartes(texto, 200);
     let parteIndex = 0;
     
     function hablarParte() {
         if (parteIndex >= partes.length) {
-            // Terminó de hablar
             botHablando = false;
             bloquearEntradaUsuario(false);
             removerOndasAudio();
@@ -375,79 +538,62 @@ function hablarGratis(texto) {
         voz.pitch = 1.0;
         voz.volume = 1.0;
         
-        // Configurar voces
-        const cargarVoces = () => {
-            const voces = speechSynthesis.getVoices();
-            const vozEspañol = voces.find(v => v.lang.includes("es"));
-            if (vozEspañol) {
-                voz.voice = vozEspañol;
-            }
-        };
-        
-        if (speechSynthesis.getVoices().length === 0) {
-            speechSynthesis.onvoiceschanged = cargarVoces;
-        } else {
-            cargarVoces();
-        }
+        // Configurar voces disponibles
+        const voces = speechSynthesis.getVoices();
+        const vozEspañol = voces.find(v => v.lang.includes("es"));
+        if (vozEspañol) voz.voice = vozEspañol;
         
         voz.onend = () => {
             parteIndex++;
-            setTimeout(hablarParte, 100); // Pequeña pausa entre partes
+            setTimeout(hablarParte, 50);
         };
         
-        voz.onerror = (evento) => {
-            console.error("Error en síntesis de voz:", evento);
+        voz.onerror = () => {
             parteIndex++;
-            setTimeout(hablarParte, 100);
+            setTimeout(hablarParte, 50);
         };
         
         speechSynthesis.speak(voz);
     }
     
-    // Comenzar a hablar
     hablarParte();
 }
 
 function dividirTextoEnPartes(texto, maxCaracteres) {
     const partes = [];
-    const palabras = texto.split(' ');
-    let parteActual = '';
+    const oraciones = texto.match(/[^.!?]+[.!?]+/g) || [texto];
     
-    for (let palabra of palabras) {
-        if ((parteActual + ' ' + palabra).length <= maxCaracteres) {
-            parteActual += (parteActual ? ' ' : '') + palabra;
+    let parteActual = '';
+    for (let oracion of oraciones) {
+        if ((parteActual + oracion).length <= maxCaracteres) {
+            parteActual += oracion;
         } else {
             if (parteActual) partes.push(parteActual);
-            parteActual = palabra;
+            parteActual = oracion;
         }
     }
-    
     if (parteActual) partes.push(parteActual);
+    
     return partes;
 }
 
 /* ---------------------------------------------------
-    RECONOCIMIENTO DE VOZ (CORREGIDO)
+    RECONOCIMIENTO DE VOZ
 -----------------------------------------------------*/
 function solicitarPermisoMicrofono() {
     permissionNotification.style.display = 'block';
     
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        return navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                permissionNotification.style.display = 'none';
-                // Detener las pistas para liberar el micrófono
-                stream.getTracks().forEach(track => track.stop());
-                return true;
-            })
-            .catch(error => {
-                permissionNotification.style.display = 'none';
-                console.error("Error de micrófono:", error);
-                agregarMensajeBot("❌ Necesitas permitir el acceso al micrófono para hablar.");
-                return false;
-            });
-    }
-    return Promise.resolve(false);
+    return navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            permissionNotification.style.display = 'none';
+            stream.getTracks().forEach(track => track.stop());
+            return true;
+        })
+        .catch(error => {
+            permissionNotification.style.display = 'none';
+            agregarMensajeBot("❌ Permiso de micrófono denegado. Usa el teclado para escribir.");
+            return false;
+        });
 }
 
 function iniciarReconocimientoVoz() {
@@ -457,7 +603,7 @@ function iniciarReconocimientoVoz() {
     }
     
     if (botHablando || mensajeEnProceso) {
-        agregarMensajeBot("⌛ Espera a que termine de hablar o procesar...");
+        agregarMensajeBot("⌛ Espera a que termine...");
         return;
     }
     
@@ -465,48 +611,30 @@ function iniciarReconocimientoVoz() {
         if (!permisoConcedido) return;
         
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
         if (!SpeechRecognition) {
-            agregarMensajeBot("⚠️ Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");
+            agregarMensajeBot("⚠️ Usa Chrome o Edge para hablar.");
             return;
         }
         
         reconocimiento = new SpeechRecognition();
-        
-        // CONFIGURACIÓN MEJORADA
         reconocimiento.lang = "es-ES";
-        reconocimiento.continuous = false;  // Se detiene automáticamente
-        reconocimiento.interimResults = false;  // Solo resultados finales
+        reconocimiento.continuous = false;
+        reconocimiento.interimResults = false;
         reconocimiento.maxAlternatives = 1;
         
-        // MEJORA: Aumentar tiempo de espera
-        reconocimiento.onspeechstart = () => {
-            console.log("Comenzó a detectar voz");
-        };
-        
-        reconocimiento.onspeechend = () => {
-            console.log("Detuvo detección de voz");
-            // No detener inmediatamente, esperar resultado
-        };
-        
         reconocimiento.onstart = () => {
-            console.log("Reconocimiento iniciado");
             escuchando = true;
             micBtn.classList.add("recording");
             micBtn.style.display = "none";
             stopBtn.style.display = "flex";
             
-            agregarMensajeBot("🎤 <b>Escuchando...</b> Di algo claro y fuerte.");
+            agregarMensajeBot("🎤 <b>Escuchando...</b> Di algo ahora.");
         };
         
         reconocimiento.onresult = (evento) => {
-            console.log("Resultado recibido");
             if (evento.results.length > 0) {
                 const texto = evento.results[0][0].transcript;
-                console.log("Texto reconocido:", texto);
-                
                 if (texto.trim().length > 0) {
-                    // Poner texto en input y enviar
                     messageInput.value = texto;
                     setTimeout(() => sendMessage(), 100);
                 } else {
@@ -516,7 +644,6 @@ function iniciarReconocimientoVoz() {
         };
         
         reconocimiento.onend = () => {
-            console.log("Reconocimiento finalizado");
             escuchando = false;
             micBtn.classList.remove("recording");
             micBtn.style.display = "flex";
@@ -524,29 +651,23 @@ function iniciarReconocimientoVoz() {
         };
         
         reconocimiento.onerror = (evento) => {
-            console.error("Error de reconocimiento:", evento.error);
             escuchando = false;
             micBtn.classList.remove("recording");
             micBtn.style.display = "flex";
             stopBtn.style.display = "none";
             
-            if (evento.error === "not-allowed" || evento.error === "permission-denied") {
-                agregarMensajeBot("❌ Permiso de micrófono denegado. Haz clic en 🎤 para volver a intentar.");
+            if (evento.error === "not-allowed") {
+                agregarMensajeBot("❌ Permiso de micrófono denegado.");
             } else if (evento.error === "no-speech") {
-                agregarMensajeBot("🎤 No detecté voz. Haz clic en 🎤 para intentar de nuevo.");
-            } else if (evento.error === "audio-capture") {
-                agregarMensajeBot("🎤 No se pudo acceder al micrófono. Verifica que esté conectado.");
-            } else {
-                agregarMensajeBot("⚠️ Error con el micrófono: " + evento.error);
+                agregarMensajeBot("🎤 No detecté voz. Intenta de nuevo.");
             }
         };
         
         try {
             reconocimiento.start();
-            console.log("Reconocimiento iniciado correctamente");
         } catch (error) {
             console.error("Error al iniciar reconocimiento:", error);
-            agregarMensajeBot("Error al iniciar el micrófono. Recarga la página.");
+            agregarMensajeBot("Error al iniciar el micrófono.");
         }
     });
 }
@@ -568,9 +689,10 @@ function bloquearEntradaUsuario(bloquear) {
     messageInput.disabled = bloquear;
     sendBtn.disabled = bloquear;
     micBtn.disabled = bloquear;
+    stopBtn.disabled = bloquear;
     
     if (bloquear) {
-        messageInput.placeholder = "Espera...";
+        messageInput.placeholder = "Bot respondiendo...";
     } else {
         messageInput.placeholder = "Escribe tu mensaje aquí...";
         messageInput.focus();
@@ -578,25 +700,21 @@ function bloquearEntradaUsuario(bloquear) {
 }
 
 /* ---------------------------------------------------
-    ONDAS DE AUDIO - FUNCIONALES
+    ONDAS DE AUDIO
 -----------------------------------------------------*/
 function agregarOndasAudio() {
-    // Buscar el último mensaje del bot
     const mensajesBot = document.querySelectorAll('.msg.bot');
     if (mensajesBot.length === 0) return;
     
     const ultimoMensaje = mensajesBot[mensajesBot.length - 1];
     
-    // Limpiar ondas anteriores
     const ondasAnteriores = ultimoMensaje.querySelector('.audio-waves');
     if (ondasAnteriores) ondasAnteriores.remove();
     
-    // Crear elemento de ondas VISIBLE
     const ondas = document.createElement('div');
     ondas.className = 'audio-waves';
     ondas.id = 'audioWaves';
     
-    // Crear 7 barras de onda
     for (let i = 0; i < 7; i++) {
         const barra = document.createElement('div');
         barra.className = 'wave-bar';
@@ -604,8 +722,6 @@ function agregarOndasAudio() {
     }
     
     ultimoMensaje.appendChild(ondas);
-    
-    // Hacer scroll para que sea visible
     chatElement.scrollTop = chatElement.scrollHeight;
 }
 
@@ -614,34 +730,11 @@ function removerOndasAudio() {
     if (ondas) {
         ondas.remove();
     }
-    
-    // También limpiar cualquier intervalo
-    if (audioWavesInterval) {
-        clearInterval(audioWavesInterval);
-        audioWavesInterval = null;
-    }
 }
 
 /* ---------------------------------------------------
     EVENTOS PRINCIPALES
 -----------------------------------------------------*/
-document.addEventListener('DOMContentLoaded', () => {
-    // Mensaje inicial
-    setTimeout(() => {
-        agregarMensajeBot(`
-            <b>¡Hola! 👋 Soy tu Asistente Virtual.</b><br>
-            <b>Para hablar conmigo:</b><br>
-            1. Haz clic en <b>🎤 Hablar</b> y PERMITE el micrófono<br>
-            2. Habla claro cuando veas "Escuchando..."<br>
-            3. O escribe en el cuadro de texto<br><br>
-            <i>Primera vez? Haz clic en 🎤 y ALLOW/PERMITIR cuando el navegador pregunte</i>
-        `);
-    }, 500);
-    
-    // Verificar conexión inicial
-    actualizarEstadoConexion();
-});
-
 // Eventos de teclado
 messageInput.addEventListener("keypress", e => {
     if (e.key === "Enter" && !mensajeEnProceso && !botHablando) {
@@ -650,7 +743,6 @@ messageInput.addEventListener("keypress", e => {
 });
 
 sendBtn.addEventListener("click", sendMessage);
-
 micBtn.addEventListener("click", iniciarReconocimientoVoz);
 stopBtn.addEventListener("click", detenerReconocimientoVoz);
 
@@ -658,9 +750,36 @@ stopBtn.addEventListener("click", detenerReconocimientoVoz);
 window.addEventListener('online', actualizarEstadoConexion);
 window.addEventListener('offline', actualizarEstadoConexion);
 
-// Pausar voz al hacer clic en cualquier parte
-document.addEventListener('click', () => {
-    if (botHablando) {
+// Evento refresh
+document.getElementById("refreshChat").addEventListener("click", () => {
+    if (chatElement.children.length === 0 || 
+        confirm("¿Reiniciar la conversación?")) {
+        
+        if (botHablando) speechSynthesis.cancel();
+        detenerReconocimientoVoz();
+        
+        chatElement.innerHTML = "";
+        sessionId = crypto.randomUUID();
+        localStorage.setItem("sessionId", sessionId);
+        
+        botHablando = false;
+        mensajeEnProceso = false;
+        bloquearEntradaUsuario(false);
+        
+        setTimeout(() => {
+            agregarMensajeBot(`
+                <div style="text-align: left;">
+                    <div style="font-size: 16px; margin-bottom: 5px;"><b>¡Conversación reiniciada! 🔄</b></div>
+                    <div style="font-size: 13px; color: #555;">¿En qué puedo ayudarte ahora?</div>
+                </div>
+            `);
+        }, 300);
+    }
+});
+
+// Pausar voz al hacer clic
+document.addEventListener('click', (e) => {
+    if (botHablando && e.target.id !== 'sendBtn' && e.target.id !== 'micBtn' && e.target.id !== 'stopBtn') {
         speechSynthesis.cancel();
         botHablando = false;
         bloquearEntradaUsuario(false);
@@ -676,17 +795,16 @@ async function sendMessage() {
     
     if (!message) {
         if (!escuchando) {
-            agregarMensajeBot("Escribe algo o haz clic en 🎤 para hablar conmigo.");
+            agregarMensajeBot("Escribe algo o haz clic en 🎤 para hablar.");
         }
         return;
     }
     
     if (mensajeEnProceso || botHablando) {
-        agregarMensajeBot("⌛ Por favor espera, estoy procesando...");
+        agregarMensajeBot("⌛ Por favor espera...");
         return;
     }
     
-    // Agregar mensaje del usuario
     agregarMensajeUsuario(message);
     messageInput.value = "";
     mensajeEnProceso = true;
@@ -704,37 +822,29 @@ async function sendMessage() {
             })
         });
 
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const data = await response.json();
-        const respuesta = data.output || data.message || data.reply || "No entendí eso. ¿Puedes reformular?";
+        const respuesta = data.output || data.message || data.reply || "No entendí. ¿Puedes reformular?";
         
-        // Agregar respuesta del bot
         agregarMensajeBot(respuesta);
-        
-        // Hablar la respuesta (dividida en partes si es larga)
         hablarGratis(respuesta);
 
     } catch (error) {
         console.error("Error:", error);
         
-        let mensajeError = "⚠️ Error de conexión con el servidor.";
+        let mensajeError = "⚠️ Error de conexión.";
         
         if (!navigator.onLine) {
-            mensajeError = "🌐 Sin conexión a internet. Conéctate e intenta de nuevo.";
+            mensajeError = "🌐 Sin conexión a internet.";
         } else if (error.message.includes("Failed to fetch")) {
-            mensajeError = "🔌 No puedo contactar al servidor. Revisa tu conexión.";
+            mensajeError = "🔌 No puedo contactar al servidor.";
         }
         
         agregarMensajeBot(mensajeError);
         
-        // Desbloquear entrada después de error
         setTimeout(() => {
-            if (!botHablando) {
-                bloquearEntradaUsuario(false);
-            }
+            if (!botHablando) bloquearEntradaUsuario(false);
         }, 2000);
         
     } finally {
@@ -752,9 +862,6 @@ function agregarMensajeUsuario(msg) {
     burbuja.textContent = msg;
     chatElement.appendChild(burbuja);
     chatElement.scrollTop = chatElement.scrollHeight;
-    
-    // Guardar en historial
-    guardarEnHistorial("usuario", msg);
 }
 
 function agregarMensajeBot(msgHTML) {
@@ -763,9 +870,6 @@ function agregarMensajeBot(msgHTML) {
     burbuja.innerHTML = msgHTML;
     chatElement.appendChild(burbuja);
     chatElement.scrollTop = chatElement.scrollHeight;
-    
-    // Guardar en historial
-    guardarEnHistorial("bot", msgHTML);
 }
 
 /* ---------------------------------------------------
@@ -777,84 +881,23 @@ function mostrarProcesando(show) {
 
 function actualizarEstadoConexion() {
     if (navigator.onLine) {
-        connectionStatus.innerHTML = "🟢 Conectado";
-        connectionStatus.style.background = "rgba(40, 167, 69, 0.2)";
-        connectionStatus.style.color = "#28a745";
+        connectionStatus.className = "online";
+        connectionStatus.innerHTML = '<span class="status-icon">●</span><span class="status-text">Conectado</span>';
     } else {
-        connectionStatus.innerHTML = "🔴 Sin conexión";
-        connectionStatus.style.background = "rgba(220, 53, 69, 0.2)";
-        connectionStatus.style.color = "#dc3545";
+        connectionStatus.className = "offline";
+        connectionStatus.innerHTML = '<span class="status-icon">●</span><span class="status-text">Sin conexión</span>';
         
         if (mensajeEnProceso) {
-            agregarMensajeBot("⚠️ Se perdió la conexión. Reintentando...");
+            agregarMensajeBot("⚠️ Se perdió la conexión.");
         }
     }
 }
 
-function guardarEnHistorial(tipo, contenido) {
-    try {
-        const historial = JSON.parse(localStorage.getItem("chatHistorial") || "[]");
-        historial.push({
-            tipo,
-            contenido,
-            fecha: new Date().toISOString()
-        });
-        
-        // Limitar a últimos 100 mensajes
-        if (historial.length > 100) {
-            historial.splice(0, historial.length - 100);
-        }
-        
-        localStorage.setItem("chatHistorial", JSON.stringify(historial));
-    } catch (error) {
-        console.error("Error guardando historial:", error);
-    }
-}
-
 /* ---------------------------------------------------
-    REINICIAR CHAT
------------------------------------------------------*/
-document.getElementById("refreshChat").addEventListener("click", () => {
-    if (chatElement.children.length === 0 || 
-        confirm("¿Seguro que quieres reiniciar la conversación? Se perderán todos los mensajes.")) {
-        
-        // Detener voz y reconocimiento
-        if (botHablando) {
-            speechSynthesis.cancel();
-        }
-        detenerReconocimientoVoz();
-        
-        // Limpiar chat
-        chatElement.innerHTML = "";
-        
-        // Nueva sesión
-        sessionId = crypto.randomUUID();
-        localStorage.setItem("sessionId", sessionId);
-        
-        // Reiniciar estados
-        botHablando = false;
-        mensajeEnProceso = false;
-        
-        // Desbloquear entrada
-        bloquearEntradaUsuario(false);
-        
-        // Mensaje inicial
-        setTimeout(() => {
-            agregarMensajeBot(`
-                <b>¡Conversación reiniciada! 🔄</b><br>
-                Haz clic en <b>🎤 Hablar</b> para hablar conmigo o escribe abajo.
-            `);
-        }, 300);
-    }
-});
-
-/* ---------------------------------------------------
-    MANEJO DE CIERRE DE PESTAÑA
+    MANEJO DE CIERRE
 -----------------------------------------------------*/
 window.addEventListener('beforeunload', () => {
-    if (botHablando) {
-        speechSynthesis.cancel();
-    }
+    if (botHablando) speechSynthesis.cancel();
     detenerReconocimientoVoz();
 });
 </script>
