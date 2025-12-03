@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Asistente Virtual</title>
+<title>Asistente Virtual - Voz Completa</title>
 
 <style>
     /* -------------------------------
@@ -47,6 +47,7 @@
         border-radius: 12px;
         font-size: 18px;
         transition: 0.2s;
+        z-index: 10;
     }
 
     #refreshChat:hover {
@@ -73,6 +74,12 @@
         word-wrap: break-word;
         font-size: 15px;
         backdrop-filter: blur(5px);
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     /* MENSAJE DEL USUARIO */
@@ -87,6 +94,55 @@
         background: rgba(255,255,255,0.6);
         color: #02375d;
         border: 1px solid rgba(255,255,255,0.7);
+    }
+
+    /* ONDAS DE AUDIO PARA EL BOT */
+    .audio-waves {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        height: 20px;
+        margin-top: 5px;
+    }
+
+    .wave-bar {
+        width: 3px;
+        background: #0d6efd;
+        border-radius: 3px;
+        animation: wave 1.2s ease-in-out infinite;
+    }
+
+    .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+    .wave-bar:nth-child(6) { animation-delay: 0.5s; }
+
+    @keyframes wave {
+        0%, 100% { height: 5px; }
+        50% { height: 15px; }
+    }
+
+    /* INDICADOR DE GRABACIÓN */
+    .recording-indicator {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 8px;
+    }
+
+    .recording-dot {
+        width: 8px;
+        height: 8px;
+        background: #dc3545;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+        margin-right: 4px;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.3; transform: scale(0.8); }
+        100% { opacity: 1; transform: scale(1); }
     }
 
     /* -------------------------------
@@ -108,23 +164,61 @@
         background: rgba(255,255,255,0.5);
         color: #02375d;
         backdrop-filter: blur(6px);
+        transition: all 0.3s;
+    }
+
+    #messageInput:focus {
+        background: rgba(255,255,255,0.8);
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.3);
+    }
+
+    #messageInput:disabled {
+        background: rgba(255,255,255,0.3);
+        cursor: not-allowed;
     }
 
     #sendBtn,
     #speakBtn {
         padding: 12px 16px;
-        background: #0d6efd;
-        color: white;
         border: none;
         border-radius: 14px;
         cursor: pointer;
         font-size: 14px;
         transition: 0.2s;
+        min-width: 60px;
     }
 
-    #sendBtn:hover,
-    #speakBtn:hover {
+    #sendBtn {
+        background: #0d6efd;
+        color: white;
+    }
+
+    #sendBtn:hover:not(:disabled) {
         background: #0b5ed7;
+    }
+
+    #sendBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    #speakBtn {
+        background: #0d6efd;
+        color: white;
+        position: relative;
+    }
+
+    #speakBtn.recording {
+        background: #dc3545 !important;
+    }
+
+    #speakBtn:hover:not(:disabled) {
+        background: #0b5ed7;
+    }
+
+    #speakBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     /* Loader */
@@ -136,134 +230,524 @@
         font-style: italic;
     }
 
+    /* Indicador de conexión */
+    #connectionStatus {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 10px;
+        background: rgba(0,0,0,0.1);
+        color: #02375d;
+    }
+
+    /* Scrollbar personalizada */
+    #chat::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #chat::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.05);
+        border-radius: 10px;
+    }
+
+    #chat::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.2);
+        border-radius: 10px;
+    }
+
+    #chat::-webkit-scrollbar-thumb:hover {
+        background: rgba(0,0,0,0.3);
+    }
 </style>
 </head>
 
 <body>
 
 <div id="chatContainer">
-    <button id="refreshChat">↻</button>
+    <div id="connectionStatus">🟢 Conectado</div>
+    <button id="refreshChat" title="Reiniciar chat">↻</button>
+    
     <div id="chat"></div>
 
     <div id="loader">Procesando...</div>
 
     <div id="inputBox">
-        <input id="messageInput" type="text" placeholder="Escribe tu mensaje..." />
-        <button id="sendBtn">Enviar</button>
-        <button id="speakBtn">🔊</button>
+        <input id="messageInput" type="text" placeholder="Escribe o habla..." />
+        <button id="sendBtn" title="Enviar mensaje">Enviar</button>
+        <button id="speakBtn" title="Hablar con el micrófono">🎤</button>
     </div>
 </div>
 
 <script>
 /* ---------------------------------------------------
-    SISTEMA DE VOZ – GRATIS (Navegador)
------------------------------------------------------*/
-function hablarGratis(texto) {
-    const voz = new SpeechSynthesisUtterance(texto);
-    voz.lang = "es-ES";
-
-    const voces = speechSynthesis.getVoices();
-    const vozEspañol = voces.find(v => v.lang.includes("es"));
-    if (vozEspañol) voz.voice = vozEspañol;
-
-    speechSynthesis.speak(voz);
-}
-
-/* ---------------------------------------------------
-    CONFIGURACIÓN DEL BOT
+    VARIABLES GLOBALES
 -----------------------------------------------------*/
 const N8N_WEBHOOK_URL = "https://n8n.srv1161635.hstgr.cloud/webhook/6b4f38ff-0de0-49f0-843f-a277a55bdfd5";
 
 let sessionId = localStorage.getItem("sessionId") || crypto.randomUUID();
 localStorage.setItem("sessionId", sessionId);
 
-// Mensaje inicial automático
-window.onload = () => {
-    agregarMensajeBot(`
-        <b>¡Hola! 👋 Soy tu Asistente Virtual.</b><br>
-        ¿Qué te gustaría saber hoy?
-    `);
-};
+let reconocimiento = null;
+let escuchando = false;
+let botHablando = false;
+let mensajeEnProceso = false;
+
+// Elementos del DOM
+const chatElement = document.getElementById("chat");
+const messageInput = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
+const speakBtn = document.getElementById("speakBtn");
+const loader = document.getElementById("loader");
+const connectionStatus = document.getElementById("connectionStatus");
 
 /* ---------------------------------------------------
-    EVENTOS
+    SISTEMA DE VOZ – TEXTO A VOZ
 -----------------------------------------------------*/
-document.getElementById("sendBtn").addEventListener("click", sendMessage);
-document.getElementById("messageInput").addEventListener("keypress", e => {
-    if (e.key === "Enter") sendMessage();
-});
-document.getElementById("speakBtn").addEventListener("click", () => {
-    hablarGratis("Hola, soy tu asistente virtual. ¿Cómo puedo ayudarte?");
-});
+function hablarGratis(texto) {
+    if (!texto || botHablando) return;
+    
+    botHablando = true;
+    bloquearEntradaUsuario(true);
+    
+    // Agregar ondas de audio al último mensaje del bot
+    agregarOndasAudio();
+    
+    const voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "es-ES";
+    voz.rate = 1.0;
+    voz.pitch = 1.0;
+    voz.volume = 1.0;
+    
+    // Buscar voz en español
+    const cargarVoces = () => {
+        const voces = speechSynthesis.getVoices();
+        const vozEspañol = voces.find(v => v.lang.includes("es") && v.name.includes("Google"));
+        if (vozEspañol) {
+            voz.voice = vozEspañol;
+        }
+    };
+    
+    if (speechSynthesis.getVoices().length === 0) {
+        speechSynthesis.addEventListener("voiceschanged", cargarVoces);
+    } else {
+        cargarVoces();
+    }
+    
+    voz.onstart = () => {
+        console.log("Bot empezó a hablar");
+    };
+    
+    voz.onend = () => {
+        console.log("Bot terminó de hablar");
+        botHablando = false;
+        bloquearEntradaUsuario(false);
+        removerOndasAudio();
+    };
+    
+    voz.onerror = (evento) => {
+        console.error("Error en síntesis de voz:", evento);
+        botHablando = false;
+        bloquearEntradaUsuario(false);
+        removerOndasAudio();
+    };
+    
+    speechSynthesis.speak(voz);
+}
 
 /* ---------------------------------------------------
-    ENVIAR MENSAJE
+    RECONOCIMIENTO DE VOZ (MICRÓFONO)
+-----------------------------------------------------*/
+function iniciarReconocimientoVoz() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+        agregarMensajeBot("⚠️ Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");
+        return;
+    }
+    
+    // Pedir permiso de micrófono
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(() => {
+                // Permiso concedido
+                configurarReconocimiento();
+            })
+            .catch(error => {
+                agregarMensajeBot("❌ Necesitas permitir el acceso al micrófono.");
+                console.error("Error de micrófono:", error);
+            });
+    } else {
+        configurarReconocimiento();
+    }
+}
+
+function configurarReconocimiento() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    reconocimiento = new SpeechRecognition();
+    
+    reconocimiento.lang = "es-ES";
+    reconocimiento.continuous = false;
+    reconocimiento.interimResults = false;
+    reconocimiento.maxAlternatives = 1;
+    
+    reconocimiento.onstart = () => {
+        escuchando = true;
+        speakBtn.classList.add("recording");
+        speakBtn.innerHTML = '<span class="recording-dot"></span>⏹️';
+        speakBtn.title = "Detener grabación";
+        
+        // Mostrar indicador en el chat
+        const indicador = document.createElement("div");
+        indicador.className = "msg bot";
+        indicador.innerHTML = '🎤 <i>Escuchando...</i>';
+        indicador.id = "listeningIndicator";
+        chatElement.appendChild(indicador);
+        chatElement.scrollTop = chatElement.scrollHeight;
+    };
+    
+    reconocimiento.onresult = (evento) => {
+        const texto = evento.results[0][0].transcript;
+        console.log("Texto reconocido:", texto);
+        
+        // Remover indicador de escucha
+        const indicador = document.getElementById("listeningIndicator");
+        if (indicador) indicador.remove();
+        
+        // Poner texto en input y enviar
+        messageInput.value = texto;
+        sendMessage();
+    };
+    
+    reconocimiento.onend = () => {
+        escuchando = false;
+        speakBtn.classList.remove("recording");
+        speakBtn.innerHTML = "🎤";
+        speakBtn.title = "Hablar con el micrófono";
+        
+        // Remover indicador si todavía existe
+        const indicador = document.getElementById("listeningIndicator");
+        if (indicador) indicador.remove();
+    };
+    
+    reconocimiento.onerror = (evento) => {
+        console.error("Error de reconocimiento:", evento.error);
+        
+        // Remover indicador
+        const indicador = document.getElementById("listeningIndicator");
+        if (indicador) indicador.remove();
+        
+        escuchando = false;
+        speakBtn.classList.remove("recording");
+        speakBtn.innerHTML = "🎤";
+        speakBtn.title = "Hablar con el micrófono";
+        
+        if (evento.error === "not-allowed" || evento.error === "service-not-allowed") {
+            agregarMensajeBot("❌ Permiso de micrófono denegado. Usa el teclado.");
+        } else if (evento.error === "no-speech") {
+            agregarMensajeBot("🎤 No detecté voz. Intenta de nuevo.");
+        } else {
+            agregarMensajeBot("⚠️ Error con el micrófono. Usa el teclado.");
+        }
+    };
+    
+    try {
+        reconocimiento.start();
+    } catch (error) {
+        console.error("Error al iniciar reconocimiento:", error);
+    }
+}
+
+/* ---------------------------------------------------
+    MANEJO DE ENTRADA DEL USUARIO
+-----------------------------------------------------*/
+function bloquearEntradaUsuario(bloquear) {
+    messageInput.disabled = bloquear;
+    sendBtn.disabled = bloquear;
+    speakBtn.disabled = bloquear;
+    
+    if (bloquear) {
+        messageInput.placeholder = "Bot respondiendo...";
+    } else {
+        messageInput.placeholder = "Escribe o habla...";
+        messageInput.focus();
+    }
+}
+
+/* ---------------------------------------------------
+    ONDAS DE AUDIO
+-----------------------------------------------------*/
+function agregarOndasAudio() {
+    // Buscar el último mensaje del bot
+    const mensajesBot = document.querySelectorAll('.msg.bot');
+    if (mensajesBot.length === 0) return;
+    
+    const ultimoMensaje = mensajesBot[mensajesBot.length - 1];
+    
+    // Crear elemento de ondas
+    const ondas = document.createElement('div');
+    ondas.className = 'audio-waves';
+    ondas.id = 'audioWaves';
+    
+    for (let i = 0; i < 6; i++) {
+        const barra = document.createElement('div');
+        barra.className = 'wave-bar';
+        ondas.appendChild(barra);
+    }
+    
+    ultimoMensaje.appendChild(ondas);
+}
+
+function removerOndasAudio() {
+    const ondas = document.getElementById('audioWaves');
+    if (ondas) {
+        ondas.remove();
+    }
+}
+
+/* ---------------------------------------------------
+    EVENTOS PRINCIPALES
+-----------------------------------------------------*/
+document.addEventListener('DOMContentLoaded', () => {
+    // Mensaje inicial
+    setTimeout(() => {
+        agregarMensajeBot(`
+            <b>¡Hola! 👋 Soy tu Asistente Virtual.</b><br>
+            Puedes escribirme o presionar 🎤 para hablar.<br>
+            <small><i>Prueba diciendo "Hola"</i></small>
+        `);
+    }, 500);
+    
+    // Verificar conexión inicial
+    actualizarEstadoConexion();
+});
+
+// Eventos de teclado
+messageInput.addEventListener("keypress", e => {
+    if (e.key === "Enter" && !mensajeEnProceso && !botHablando) {
+        sendMessage();
+    }
+});
+
+sendBtn.addEventListener("click", sendMessage);
+
+speakBtn.addEventListener("click", () => {
+    if (!escuchando && !botHablando && !mensajeEnProceso) {
+        iniciarReconocimientoVoz();
+    } else if (escuchando && reconocimiento) {
+        reconocimiento.stop();
+    }
+});
+
+// Eventos de conexión
+window.addEventListener('online', actualizarEstadoConexion);
+window.addEventListener('offline', actualizarEstadoConexion);
+
+/* ---------------------------------------------------
+    ENVIAR MENSAJE AL SERVIDOR
 -----------------------------------------------------*/
 async function sendMessage() {
-    const input = document.getElementById("messageInput");
-    const message = input.value.trim();
-    if (!message) return;
-
+    const message = messageInput.value.trim();
+    
+    if (!message) {
+        if (!escuchando) {
+            agregarMensajeBot("Escribe algo o presiona 🎤 para hablar conmigo.");
+        }
+        return;
+    }
+    
+    if (mensajeEnProceso || botHablando) {
+        agregarMensajeBot("⌛ Por favor espera, estoy procesando...");
+        return;
+    }
+    
+    // Agregar mensaje del usuario
     agregarMensajeUsuario(message);
-    input.value = "";
+    messageInput.value = "";
+    mensajeEnProceso = true;
+    bloquearEntradaUsuario(true);
     mostrarProcesando(true);
-
+    
     try {
         const response = await fetch(N8N_WEBHOOK_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message, sessionId })
+            body: JSON.stringify({ 
+                message, 
+                sessionId,
+                timestamp: new Date().toISOString(),
+                source: escuchando ? "voice" : "text"
+            })
         });
 
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
         const data = await response.json();
-        const respuesta = data.output || data.message || "No entendí eso.";
-
+        const respuesta = data.output || data.message || data.reply || "No entendí eso. ¿Puedes reformular?";
+        
+        // Agregar respuesta del bot
         agregarMensajeBot(respuesta);
-        hablarGratis(respuesta);
+        
+        // Hablar la respuesta (si no es muy larga)
+        if (respuesta.length < 300) {
+            hablarGratis(respuesta);
+        } else {
+            // Si es muy larga, solo leer un resumen
+            const resumen = respuesta.substring(0, 150) + "...";
+            hablarGratis("Te he respondido con un mensaje largo. Revísalo en la pantalla.");
+            bloquearEntradaUsuario(false);
+        }
 
     } catch (error) {
-        agregarMensajeBot("Error al conectar con el servidor.");
+        console.error("Error:", error);
+        
+        let mensajeError = "⚠️ Error de conexión con el servidor.";
+        
+        if (!navigator.onLine) {
+            mensajeError = "🌐 Sin conexión a internet. Conéctate e intenta de nuevo.";
+        } else if (error.message.includes("Failed to fetch")) {
+            mensajeError = "🔌 No puedo contactar al servidor. Revisa tu conexión.";
+        }
+        
+        agregarMensajeBot(mensajeError);
+        
+        // Desbloquear entrada después de error
+        setTimeout(() => {
+            bloquearEntradaUsuario(false);
+        }, 2000);
+        
+    } finally {
+        mensajeEnProceso = false;
+        mostrarProcesando(false);
+        
+        // Solo desbloquear si el bot no está hablando
+        if (!botHablando) {
+            bloquearEntradaUsuario(false);
+        }
     }
-
-    mostrarProcesando(false);
 }
 
 /* ---------------------------------------------------
-    MOSTRAR MENSAJES
+    MANEJO DE MENSAJES EN EL CHAT
 -----------------------------------------------------*/
 function agregarMensajeUsuario(msg) {
-    const chat = document.getElementById("chat");
     const burbuja = document.createElement("div");
     burbuja.className = "msg user";
     burbuja.textContent = msg;
-    chat.appendChild(burbuja);
-    chat.scrollTop = chat.scrollHeight;
+    chatElement.appendChild(burbuja);
+    chatElement.scrollTop = chatElement.scrollHeight;
+    
+    // Guardar en historial
+    guardarEnHistorial("usuario", msg);
 }
 
 function agregarMensajeBot(msgHTML) {
-    const chat = document.getElementById("chat");
     const burbuja = document.createElement("div");
     burbuja.className = "msg bot";
     burbuja.innerHTML = msgHTML;
-    chat.appendChild(burbuja);
-    chat.scrollTop = chat.scrollHeight;
+    chatElement.appendChild(burbuja);
+    chatElement.scrollTop = chatElement.scrollHeight;
+    
+    // Guardar en historial
+    guardarEnHistorial("bot", msgHTML);
 }
 
 /* ---------------------------------------------------
-    LOADER
+    FUNCIONES AUXILIARES
 -----------------------------------------------------*/
 function mostrarProcesando(show) {
-    document.getElementById("loader").style.display = show ? "block" : "none";
+    loader.style.display = show ? "block" : "none";
+}
+
+function actualizarEstadoConexion() {
+    if (navigator.onLine) {
+        connectionStatus.innerHTML = "🟢 Conectado";
+        connectionStatus.style.background = "rgba(40, 167, 69, 0.2)";
+        connectionStatus.style.color = "#28a745";
+    } else {
+        connectionStatus.innerHTML = "🔴 Sin conexión";
+        connectionStatus.style.background = "rgba(220, 53, 69, 0.2)";
+        connectionStatus.style.color = "#dc3545";
+        
+        if (mensajeEnProceso) {
+            agregarMensajeBot("⚠️ Se perdió la conexión. Reintentando...");
+        }
+    }
+}
+
+function guardarEnHistorial(tipo, contenido) {
+    try {
+        const historial = JSON.parse(localStorage.getItem("chatHistorial") || "[]");
+        historial.push({
+            tipo,
+            contenido,
+            fecha: new Date().toISOString()
+        });
+        
+        // Limitar a últimos 100 mensajes
+        if (historial.length > 100) {
+            historial.splice(0, historial.length - 100);
+        }
+        
+        localStorage.setItem("chatHistorial", JSON.stringify(historial));
+    } catch (error) {
+        console.error("Error guardando historial:", error);
+    }
 }
 
 /* ---------------------------------------------------
     REINICIAR CHAT
 -----------------------------------------------------*/
 document.getElementById("refreshChat").addEventListener("click", () => {
-    document.getElementById("chat").innerHTML = "";
-    sessionId = crypto.randomUUID();
-    localStorage.setItem("sessionId", sessionId);
-    agregarMensajeBot("Chat reiniciado 🔄");
+    if (chatElement.children.length === 0 || 
+        confirm("¿Seguro que quieres reiniciar la conversación? Se perderán todos los mensajes.")) {
+        
+        // Detener voz y reconocimiento
+        if (botHablando) {
+            speechSynthesis.cancel();
+        }
+        if (escuchando && reconocimiento) {
+            reconocimiento.stop();
+        }
+        
+        // Limpiar chat
+        chatElement.innerHTML = "";
+        
+        // Nueva sesión
+        sessionId = crypto.randomUUID();
+        localStorage.setItem("sessionId", sessionId);
+        
+        // Reiniciar estados
+        botHablando = false;
+        mensajeEnProceso = false;
+        escuchando = false;
+        
+        // Desbloquear entrada
+        bloquearEntradaUsuario(false);
+        
+        // Mensaje inicial
+        setTimeout(() => {
+            agregarMensajeBot(`
+                <b>¡Conversación reiniciada! 🔄</b><br>
+                ¿En qué puedo ayudarte ahora?
+            `);
+        }, 300);
+    }
+});
+
+/* ---------------------------------------------------
+    MANEJO DE CIERRE DE PESTAÑA
+-----------------------------------------------------*/
+window.addEventListener('beforeunload', () => {
+    if (botHablando) {
+        speechSynthesis.cancel();
+    }
+    if (escuchando && reconocimiento) {
+        reconocimiento.stop();
+    }
 });
 </script>
 
